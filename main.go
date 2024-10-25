@@ -71,10 +71,19 @@ func initDB() *sql.DB {
 	createTable := `
 	CREATE TABLE IF NOT EXISTS emails (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		from_addr TEXT,
-		to_addr TEXT,
+		path TEXT NOT NULL,
+		from_addr TEXT NOT NULL,
+		to_addr TEXT NOT NULL,
+		delivered_to TEXT,
 		subject TEXT,
-		body TEXT
+		text TEXT,
+		html TEXT,
+		date TEXT,
+		is_seen INTEGER DEFAULT 0,
+		is_important INTEGER DEFAULT 0,
+		is_answered INTEGER DEFAULT 0,
+		is_selected INTEGER DEFAULT 0,
+		UNIQUE(path)
 	);`
 
 	_, err = db.Exec(createTable)
@@ -87,11 +96,25 @@ func initDB() *sql.DB {
 
 func saveEmail(db *sql.DB, email *Email) error {
 	query := `
-	INSERT INTO emails (from_addr, to_addr, subject, body)
-	VALUES (?, ?, ?, ?)`
+	INSERT INTO emails (
+		path, from_addr, to_addr, delivered_to, 
+		subject, text, html, date,
+		is_seen, is_important, is_answered, is_selected
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	_, err := db.Exec(query, email.From, email.To, email.Subject, email.Text)
+	_, err := db.Exec(query, 
+		email.Path, email.From, email.To, email.DeliveredTo,
+		email.Subject, email.Text, email.HTML, email.Date,
+		boolToInt(email.IsSeen), boolToInt(email.IsImportant), 
+		boolToInt(email.IsAnswered), boolToInt(email.IsSelected))
 	return err
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 func main() {
