@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -54,18 +55,18 @@ func ParseMaildirFile(path string) *Email {
 
 	// Parse flags from filename
 	fp := NewFlagParser(path)
-	
+
 	// Construct and return an Email struct.
 	return &Email{
-		Path:        path,
-		Date:        date,
-		From:        from,
-		To:          to,
-		Subject:     subject,
-		Text:        text,
-		IsSeen:      fp.HasFlag(FlagSeen),
-		IsReplied:   fp.HasFlag(FlagReplied),
-		IsFlaggged:  fp.HasFlag(FlagFlagged),
+		Path:       path,
+		Date:       date,
+		From:       from,
+		To:         to,
+		Subject:    subject,
+		Text:       text,
+		IsSeen:     fp.HasFlag(FlagSeen),
+		IsReplied:  fp.HasFlag(FlagReplied),
+		IsFlaggged: fp.HasFlag(FlagFlagged),
 	}
 }
 func initDB() *sql.DB {
@@ -113,6 +114,44 @@ func saveEmail(db *sql.DB, email *Email) error {
 		boolToInt(email.IsSeen), boolToInt(email.IsReplied),
 		boolToInt(email.IsFlaggged))
 	return err
+}
+
+func newEmails(repoPath string) ([]string, error) {
+	repoPath = strings.Trim(repoPath, " ")
+	cmd := exec.Command("git", "-C", repoPath, "ls-files", "--other")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	// Split output into lines and construct full paths
+	var paths []string
+	for _, file := range strings.Split(string(output), "\n") {
+		if file != "" {
+			paths = append(paths, file)
+		}
+	}
+
+	return paths, nil
+}
+
+func deletedEmails(repoPath string) ([]string, error) {
+	repoPath = strings.Trim(repoPath, " ")
+	cmd := exec.Command("git", "-C", repoPath, "ls-files", "--deleted")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	// Split output into lines and construct full paths
+	var paths []string
+	for _, file := range strings.Split(string(output), "\n") {
+		if file != "" {
+			paths = append(paths, file)
+		}
+	}
+
+	return paths, nil
 }
 
 func boolToInt(b bool) int {
