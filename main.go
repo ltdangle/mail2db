@@ -145,6 +145,10 @@ func main() {
 			email := ParseMaildirFile(path)
 			err = saveEmail(db, email)
 			if err != nil {
+				if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+					// Skip already processed emails silently
+					return nil
+				}
 				log.Printf("Error saving email from %s: %v", path, err)
 				return nil
 			}
