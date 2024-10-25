@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/jhillyerd/enmime"
 	_ "github.com/mattn/go-sqlite3"
@@ -22,7 +23,7 @@ type Email struct {
 	Subject     string
 	Text        string
 	HTML        string
-	Date        string
+	Date        time.Time
 
 	// Email flags
 	IsSeen      bool
@@ -46,7 +47,7 @@ func ParseMaildirFile(path string) *Email {
 	env, _ := enmime.ReadEnvelope(strings.NewReader(raw_msg))
 
 	// Extract the email headers and body.
-	date := env.GetHeader("Date")
+	date, _ := time.Parse(time.RFC1123Z, env.GetHeader("Date"))
 	from := env.GetHeader("From")
 	to := env.GetHeader("To")
 	subject := env.GetHeader("Subject")
@@ -78,7 +79,7 @@ func initDB() *sql.DB {
 		subject TEXT,
 		text TEXT,
 		html TEXT,
-		date TEXT,
+		date DATETIME,
 		is_seen INTEGER DEFAULT 0,
 		is_important INTEGER DEFAULT 0,
 		is_answered INTEGER DEFAULT 0,
