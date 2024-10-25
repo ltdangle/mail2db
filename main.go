@@ -3,22 +3,65 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/jhillyerd/enmime"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Email struct {
-	From    string
-	To      string
-	Subject string
-	Body    string
+	Id int
+	// Email's path on the filesystem
+	Path        string
+	From        string
+	To          string
+	DeliveredTo string
+	Subject     string
+	Text        string
+	HTML        string
+	Date        string
+
+	// Email flags
+	IsSeen      bool
+	IsImportant bool
+	IsAnswered  bool
+	IsSelected  bool
 }
 
+// ParseMaildirFile parses the maildir file provided, and returns a pointer to the resulting Email struct.
+// It takes a string with the path to the maildir file as its only argument, and panics if an error occurs while reading the file.
+func ParseMaildirFile(path string) *Email {
+	// Read the file.
+	raw_msg_byte, err := os.ReadFile(path)
+	if err != nil {
+		// If an error occurs, panic and print the error message.
+		panic(err)
+	}
+	raw_msg := string(raw_msg_byte)
+
+	// Parse the file using enmime.
+	env, _ := enmime.ReadEnvelope(strings.NewReader(raw_msg))
+
+	// Extract the email headers and body.
+	date := env.GetHeader("Date")
+	from := env.GetHeader("From")
+	to := env.GetHeader("To")
+	subject := env.GetHeader("Subject")
+	text := env.Text
+
+	// Construct and return an Email struct.
+	return &Email{
+		Path:    path,
+		Date:    date,
+		From:    from,
+		To:      to,
+		Subject: subject,
+		Text:    text,
+	}
+}
 func initDB() *sql.DB {
 	db, err := sql.Open("sqlite3", "emails.db")
 	if err != nil {
@@ -42,48 +85,12 @@ func initDB() *sql.DB {
 	return db
 }
 
-func parseEmailFile(path string) (*Email, error) {
-	content, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	lines := strings.Split(string(content), "\n")
-	email := &Email{}
-	
-	inBody := false
-	bodyLines := []string{}
-
-	for _, line := range lines {
-		if inBody {
-			bodyLines = append(bodyLines, line)
-			continue
-		}
-
-		if line == "" {
-			inBody = true
-			continue
-		}
-
-		if strings.HasPrefix(line, "From: ") {
-			email.From = strings.TrimPrefix(line, "From: ")
-		} else if strings.HasPrefix(line, "To: ") {
-			email.To = strings.TrimPrefix(line, "To: ")
-		} else if strings.HasPrefix(line, "Subject: ") {
-			email.Subject = strings.TrimPrefix(line, "Subject: ")
-		}
-	}
-
-	email.Body = strings.Join(bodyLines, "\n")
-	return email, nil
-}
-
 func saveEmail(db *sql.DB, email *Email) error {
 	query := `
 	INSERT INTO emails (from_addr, to_addr, subject, body)
 	VALUES (?, ?, ?, ?)`
 
-	_, err := db.Exec(query, email.From, email.To, email.Subject, email.Body)
+	_, err := db.Exec(query, email.From, email.To, email.Subject, email.Text)
 	return err
 }
 
@@ -94,7 +101,7 @@ func main() {
 	}
 
 	mailDir := os.Args[1]
-	
+
 	// Check if directory exists
 	info, err := os.Stat(mailDir)
 	if err != nil {
@@ -112,12 +119,7 @@ func main() {
 		}
 
 		if !info.IsDir() {
-			email, err := parseEmailFile(path)
-			if err != nil {
-				log.Printf("Error parsing %s: %v", path, err)
-				return nil
-			}
-
+			email := ParseMaildirFile(path)
 			err = saveEmail(db, email)
 			if err != nil {
 				log.Printf("Error saving email from %s: %v", path, err)
