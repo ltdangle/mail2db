@@ -52,14 +52,20 @@ func ParseMaildirFile(path string) *Email {
 	subject := env.GetHeader("Subject")
 	text := env.Text
 
+	// Parse flags from filename
+	fp := NewFlagParser(path)
+	
 	// Construct and return an Email struct.
 	return &Email{
-		Path:    path,
-		Date:    date,
-		From:    from,
-		To:      to,
-		Subject: subject,
-		Text:    text,
+		Path:        path,
+		Date:        date,
+		From:        from,
+		To:          to,
+		Subject:     subject,
+		Text:        text,
+		IsSeen:      fp.HasFlag(FlagSeen),
+		IsReplied:   fp.HasFlag(FlagReplied),
+		IsFlaggged:  fp.HasFlag(FlagFlagged),
 	}
 }
 func initDB() *sql.DB {
