@@ -26,10 +26,9 @@ type Email struct {
 	Date        time.Time
 
 	// Email flags
-	IsSeen      bool
-	IsImportant bool
-	IsAnswered  bool
-	IsSelected  bool
+	IsSeen     bool
+	IsReplied  bool
+	IsFlaggged bool
 }
 
 // ParseMaildirFile parses the maildir file provided, and returns a pointer to the resulting Email struct.
@@ -81,9 +80,8 @@ func initDB() *sql.DB {
 		html TEXT,
 		date DATETIME,
 		is_seen INTEGER DEFAULT 0,
-		is_important INTEGER DEFAULT 0,
-		is_answered INTEGER DEFAULT 0,
-		is_selected INTEGER DEFAULT 0,
+		is_replied INTEGER DEFAULT 0,
+		is_flaggged INTEGER DEFAULT 0,
 		UNIQUE(path)
 	);`
 
@@ -100,14 +98,14 @@ func saveEmail(db *sql.DB, email *Email) error {
 	INSERT INTO emails (
 		path, from_addr, to_addr, delivered_to, 
 		subject, text, html, date,
-		is_seen, is_important, is_answered, is_selected
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		is_seen, is_replied, is_flaggged
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	_, err := db.Exec(query, 
+	_, err := db.Exec(query,
 		email.Path, email.From, email.To, email.DeliveredTo,
 		email.Subject, email.Text, email.HTML, email.Date,
-		boolToInt(email.IsSeen), boolToInt(email.IsImportant), 
-		boolToInt(email.IsAnswered), boolToInt(email.IsSelected))
+		boolToInt(email.IsSeen), boolToInt(email.IsReplied),
+		boolToInt(email.IsFlaggged))
 	return err
 }
 
