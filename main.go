@@ -192,7 +192,6 @@ func main() {
             fmt.Printf("Parsing file: %s\n", path)
             email, err := ParseMaildirFile(path)
             if err != nil {
-                log.Printf("Skipping file %s: %v", path, err)
                 fmt.Printf("Skipped file (parse error): %s\n", path)
                 skippedFiles++
                 return nil
