@@ -167,6 +167,13 @@ func main() {
 		}
 
 		if !info.IsDir() {
+			fmt.Printf("Parsing file: %s\n", path)
+			email, err := ParseMaildirFile(path)
+			if err != nil {
+				log.Printf("Skipping file %s: %v", path, err)
+				return nil
+			}
+
 			existing, err := findEmailByPath(db, path)
 			if err != nil {
 				log.Printf("Error checking for existing email at %s: %v", path, err)
@@ -177,11 +184,6 @@ func main() {
 				return nil
 			}
 
-			email, err := ParseMaildirFile(path)
-			if err != nil {
-				log.Printf("Skipping file %s: %v", path, err)
-				return nil
-			}
 			err = saveEmail(db, email)
 			if err != nil {
 				log.Printf("Error saving email from %s: %v", path, err)
