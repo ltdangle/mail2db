@@ -86,6 +86,18 @@ func saveEmail(db *gorm.DB, email *Email) error {
 	return result.Error
 }
 
+func findEmailByPath(db *gorm.DB, path string) (*Email, error) {
+    var email Email
+    result := db.Where("path = ?", path).First(&email)
+    if result.Error != nil {
+        if result.Error == gorm.ErrRecordNotFound {
+            return nil, nil
+        }
+        return nil, result.Error
+    }
+    return &email, nil
+}
+
 func newEmails(repoPath string) ([]string, error) {
 	repoPath = strings.Trim(repoPath, " ")
 	cmd := exec.Command("git", "-C", repoPath, "ls-files", "--other")
@@ -149,13 +161,19 @@ func main() {
 		}
 
 		if !info.IsDir() {
+			existing, err := findEmailByPath(db, path)
+			if err != nil {
+				log.Printf("Error checking for existing email at %s: %v", path, err)
+				return nil
+			}
+			if existing != nil {
+				// Skip already processed emails silently
+				return nil
+			}
+
 			email := ParseMaildirFile(path)
 			err = saveEmail(db, email)
 			if err != nil {
-				if err.Error() == "UNIQUE constraint failed: emails.path" {
-					// Skip already processed emails silently
-					return nil
-				}
 				log.Printf("Error saving email from %s: %v", path, err)
 				return nil
 			}
