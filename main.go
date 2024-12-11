@@ -144,59 +144,74 @@ func deletedEmails(repoPath string) ([]string, error) {
 
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Usage: go run . <imap_mail_directory>")
-		os.Exit(1)
-	}
+    if len(os.Args) != 2 {
+        fmt.Println("Usage: go run . <imap_mail_directory>")
+        os.Exit(1)
+    }
 
-	mailDir := os.Args[1]
+    mailDir := os.Args[1]
 
-	// Check if directory exists
-	info, err := os.Stat(mailDir)
-	if err != nil {
-		log.Fatalf("Error accessing directory: %v", err)
-	}
-	if !info.IsDir() {
-		log.Fatalf("%s is not a directory", mailDir)
-	}
-	db := initDB()
+    // Check if directory exists
+    info, err := os.Stat(mailDir)
+    if err != nil {
+        log.Fatalf("Error accessing directory: %v", err)
+    }
+    if !info.IsDir() {
+        log.Fatalf("%s is not a directory", mailDir)
+    }
+    db := initDB()
 
-	err = filepath.Walk(mailDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+    // Add counters
+    var totalFiles, parsedFiles, skippedFiles int
 
-		if !info.IsDir() {
-			fmt.Printf("Parsing file: %s\n", path)
-			email, err := ParseMaildirFile(path)
-			if err != nil {
-				log.Printf("Skipping file %s: %v", path, err)
-				return nil
-			}
+    err = filepath.Walk(mailDir, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
 
-			existing, err := findEmailByPath(db, path)
-			if err != nil {
-				log.Printf("Error checking for existing email at %s: %v", path, err)
-				return nil
-			}
-			if existing != nil {
-				// Skip already processed emails silently
-				return nil
-			}
+        if !info.IsDir() {
+            totalFiles++
+            fmt.Printf("Parsing file: %s\n", path)
+            email, err := ParseMaildirFile(path)
+            if err != nil {
+                log.Printf("Skipping file %s: %v", path, err)
+                skippedFiles++
+                return nil
+            }
 
-			err = saveEmail(db, email)
-			if err != nil {
-				log.Printf("Error saving email from %s: %v", path, err)
-				return nil
-			}
+            existing, err := findEmailByPath(db, path)
+            if err != nil {
+                log.Printf("Error checking for existing email at %s: %v", path, err)
+                skippedFiles++
+                return nil
+            }
+            if existing != nil {
+                // Skip already processed emails silently
+                skippedFiles++
+                return nil
+            }
 
-			fmt.Printf("Processed email from: %s\n", email.From)
-		}
+            err = saveEmail(db, email)
+            if err != nil {
+                log.Printf("Error saving email from %s: %v", path, err)
+                skippedFiles++
+                return nil
+            }
 
-		return nil
-	})
+            parsedFiles++
+            fmt.Printf("Processed email from: %s\n", email.From)
+        }
 
-	if err != nil {
-		log.Fatal(err)
-	}
+        return nil
+    })
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Print statistics
+    fmt.Printf("\nProcessing complete:\n")
+    fmt.Printf("Total files found: %d\n", totalFiles)
+    fmt.Printf("Successfully parsed and saved: %d\n", parsedFiles)
+    fmt.Printf("Skipped files: %d\n", skippedFiles)
 }
