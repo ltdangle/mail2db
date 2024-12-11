@@ -12,6 +12,7 @@ import (
 	"github.com/jhillyerd/enmime"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type Email struct {
@@ -73,7 +74,9 @@ func ParseMaildirFile(path string) (*Email, error) {
 	}, nil
 }
 func initDB() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("emails.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("emails.db"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
