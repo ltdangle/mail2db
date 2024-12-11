@@ -29,22 +29,28 @@ type Email struct {
 	IsFlaggged  bool      `gorm:"default:false"`
 }
 
-// ParseMaildirFile parses the maildir file provided, and returns a pointer to the resulting Email struct.
-// It takes a string with the path to the maildir file as its only argument, and panics if an error occurs while reading the file.
-func ParseMaildirFile(path string) *Email {
+// ParseMaildirFile parses the maildir file provided, and returns a pointer to the resulting Email struct and any error.
+func ParseMaildirFile(path string) (*Email, error) {
 	// Read the file.
 	raw_msg_byte, err := os.ReadFile(path)
 	if err != nil {
-		// If an error occurs, panic and print the error message.
-		panic(err)
+		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 	raw_msg := string(raw_msg_byte)
 
 	// Parse the file using enmime.
-	env, _ := enmime.ReadEnvelope(strings.NewReader(raw_msg))
+	env, err := enmime.ReadEnvelope(strings.NewReader(raw_msg))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse email: %w", err)
+	}
 
 	// Extract the email headers and body.
-	date, _ := time.Parse(time.RFC1123Z, env.GetHeader("Date"))
+	date, err := time.Parse(time.RFC1123Z, env.GetHeader("Date"))
+	if err != nil {
+		// If date parsing fails, use current time as fallback
+		date = time.Now()
+	}
+	
 	from := env.GetHeader("From")
 	to := env.GetHeader("To")
 	subject := env.GetHeader("Subject")
@@ -64,7 +70,7 @@ func ParseMaildirFile(path string) *Email {
 		IsSeen:     fp.HasFlag(FlagSeen),
 		IsReplied:  fp.HasFlag(FlagReplied),
 		IsFlaggged: fp.HasFlag(FlagFlagged),
-	}
+	}, nil
 }
 func initDB() *gorm.DB {
 	db, err := gorm.Open(sqlite.Open("emails.db"), &gorm.Config{})
@@ -171,7 +177,11 @@ func main() {
 				return nil
 			}
 
-			email := ParseMaildirFile(path)
+			email, err := ParseMaildirFile(path)
+			if err != nil {
+				log.Printf("Skipping file %s: %v", path, err)
+				return nil
+			}
 			err = saveEmail(db, email)
 			if err != nil {
 				log.Printf("Error saving email from %s: %v", path, err)
