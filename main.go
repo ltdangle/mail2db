@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/araddon/dateparse"
 	"github.com/jhillyerd/enmime"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -44,7 +45,7 @@ func ParseMaildirFile(path string) (*Email, error) {
 	}
 
 	// Extract the email headers and body.
-	date, err := time.Parse(time.RFC1123Z, env.GetHeader("Date"))
+	date, err := dateparse.ParseAny(env.GetHeader("Date"))
 	if err != nil {
 		// If date parsing fails, use current time as fallback
 		date = time.Now()

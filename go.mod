@@ -3,6 +3,7 @@ module mail2db
 go 1.23.1
 
 require (
+	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/jhillyerd/enmime v1.3.0
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.25.12
