@@ -49,8 +49,8 @@ func ParseMaildirFile(path string) (*Email, error) {
 	dateStr := strings.Join(strings.Fields(env.GetHeader("Date")), " ")
 	date, err := dateparse.ParseAny(dateStr)
 	if err != nil {
-		// If date parsing fails, use current time as fallback
-		date = time.Now()
+		// If date parsing fails, use Unix epoch start as fallback
+		date = time.Unix(0, 0)
 	}
 
 	from := env.GetHeader("From")
