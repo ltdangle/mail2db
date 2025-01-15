@@ -146,6 +146,17 @@ func deletedEmails(repoPath string) ([]string, error) {
 }
 
 
+func deleteEmail(db *gorm.DB, path string) error {
+    result := db.Where("path = ?", path).Delete(&Email{})
+    return result.Error
+}
+
+func getAllEmailPaths(db *gorm.DB) ([]string, error) {
+    var paths []string
+    result := db.Model(&Email{}).Pluck("path", &paths)
+    return paths, result.Error
+}
+
 func main() {
     if len(os.Args) != 2 {
         fmt.Println("Usage: go run . <imap_mail_directory>")
@@ -216,9 +227,44 @@ func main() {
         log.Fatal(err)
     }
 
+    // Get all paths from database
+    dbPaths, err := getAllEmailPaths(db)
+    if err != nil {
+        log.Fatal("Error getting database paths:", err)
+    }
+
+    // Create a map of filesystem paths for efficient lookup
+    fsPathsMap := make(map[string]bool)
+    err = filepath.Walk(mailDir, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+        if !info.IsDir() {
+            fsPathsMap[path] = true
+        }
+        return nil
+    })
+    if err != nil {
+        log.Fatal("Error walking filesystem:", err)
+    }
+
+    // Delete database records for files that no longer exist
+    var deletedCount int
+    for _, dbPath := range dbPaths {
+        if !fsPathsMap[dbPath] {
+            if err := deleteEmail(db, dbPath); err != nil {
+                log.Printf("Error deleting email record for %s: %v", dbPath, err)
+                continue
+            }
+            deletedCount++
+            fmt.Printf("Deleted database record for missing file: %s\n", dbPath)
+        }
+    }
+
     // Print statistics
     fmt.Printf("\nProcessing complete:\n")
     fmt.Printf("Total files found: %d\n", totalFiles)
     fmt.Printf("Successfully parsed and saved: %d\n", parsedFiles)
     fmt.Printf("Skipped files: %d\n", skippedFiles)
+    fmt.Printf("Deleted records: %d\n", deletedCount)
 }
