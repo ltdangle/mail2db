@@ -157,6 +157,14 @@ func main() {
 			return err
 		}
 
+		// Skip hidden files and directories
+		if strings.HasPrefix(filepath.Base(path), ".") {
+			if info.IsDir() {
+				return filepath.SkipDir // skip the entire directory
+			}
+			return nil // skip the file
+		}
+
 		if !info.IsDir() {
 			totalFiles++
 
@@ -213,6 +221,14 @@ func main() {
 		if err != nil {
 			return err
 		}
+		// Skip hidden files and directories
+		if strings.HasPrefix(filepath.Base(path), ".") {
+			if info.IsDir() {
+				return filepath.SkipDir // skip the entire directory
+			}
+			return nil // skip the file
+		}
+
 		if !info.IsDir() {
 			fsPathsMap[path] = true
 		}
