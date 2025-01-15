@@ -21,7 +21,7 @@ type Email struct {
 	To          string `gorm:"column:to_addr;not null"`
 	DeliveredTo string
 	Subject     string
-	Text        string
+	Body        string
 	Date        time.Time
 	IsSeen      bool `gorm:"default:false"`
 	IsReplied   bool `gorm:"default:false"`
@@ -65,7 +65,7 @@ func ParseMaildirFile(path string) (*Email, error) {
 		From:       from,
 		To:         to,
 		Subject:    subject,
-		Text:       text,
+		Body:       text,
 		IsSeen:     fp.HasFlag(FlagSeen),
 		IsReplied:  fp.HasFlag(FlagReplied),
 		IsFlaggged: fp.HasFlag(FlagFlagged),
