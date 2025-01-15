@@ -1,0 +1,304 @@
+Return-Path: <01020192c2b88300-8d371f8e-b154-4616-8690-3dc553c78f6b-000000@mail.tito.io>
+Delivered-To: user@domain.net
+Received: from mp1.migadu.com ([2001:41d0:1008:1e59::1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
+	by ms18.migadu.com with LMTPS
+	id uOwXKg5SG2ei9gAAgIH0HQ
+	(envelope-from <01020192c2b88300-8d371f8e-b154-4616-8690-3dc553c78f6b-000000@mail.tito.io>)
+	for <user@domain.net>; Fri, 25 Oct 2024 10:08:46 +0200
+Received: from aspmx1.migadu.com ([2001:41d0:303:e16b::])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
+	by mp1.migadu.com with LMTPS
+	id iJ3/JQ5SG2fHIwEA62LTzQ
+	(envelope-from <01020192c2b88300-8d371f8e-b154-4616-8690-3dc553c78f6b-000000@mail.tito.io>)
+	for <user@domain.net>; Fri, 25 Oct 2024 10:08:46 +0200
+X-Envelope-To: user@domain.net
+Authentication-Results: aspmx1.migadu.com;
+	dkim=pass header.d=tito.io header.s=od7rhe4qebuvge5vzupqrkympbljrg22 header.b=BlaqPWCM;
+	dkim=pass header.d=amazonses.com header.s=uku4taia5b5tsbglxyj6zym32efj7xqv header.b=jv0L41n1;
+	spf=pass (aspmx1.migadu.com: domain of 01020192c2b88300-8d371f8e-b154-4616-8690-3dc553c78f6b-000000@mail.tito.io designates 54.240.3.10 as permitted sender) smtp.mailfrom=01020192c2b88300-8d371f8e-b154-4616-8690-3dc553c78f6b-000000@mail.tito.io;
+	dmarc=pass (policy=none) header.from=tito.io
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=domain.net;
+	s=key1; t=1729843726; h=from:from:reply-to:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:dkim-signature;
+	bh=sJ/3Dlrm71oS/fPZaCJ44YUzwyn4lAUbopf+HzpJZsI=;
+	b=rFJhZoSxNfrXjR3pa8xZRS/i6f/5C1nFi3RqUZLeWXCArD+PAYcA49mePeJ25mq1bVIYTR
+	BjQwMEc6LxVaGGpzGf8YqXYw8uW+5O0u1Ho+sSa4UBNczVmEWQ1nYQS0tlaMlY5Wr/pJEp
+	eC+ufFAvIMm0s44uY173uJpfAIO38tU=
+ARC-Seal: i=1; s=key1; d=domain.net; t=1729843726; a=rsa-sha256; cv=none;
+	b=nizpr4mN4pnGGR2G16Xec3SFvIEVQz28bdIxj1JTtro1GGoO86yprW6/PdTika/UQ3qSBR
+	1hWfCW2F3GQAPJlcgk/ubd3BpE/W/72FQgnMcKqV2u4bXKfFy0r78e+TBYRESuNRyQ9x1h
+	0L1RkX2Ble8/D2lx3OASEVrlS6ovwCI=
+ARC-Authentication-Results: i=1;
+	aspmx1.migadu.com;
+	dkim=pass header.d=tito.io header.s=od7rhe4qebuvge5vzupqrkympbljrg22 header.b=BlaqPWCM;
+	dkim=pass header.d=amazonses.com header.s=uku4taia5b5tsbglxyj6zym32efj7xqv header.b=jv0L41n1;
+	spf=pass (aspmx1.migadu.com: domain of 01020192c2b88300-8d371f8e-b154-4616-8690-3dc553c78f6b-000000@mail.tito.io designates 54.240.3.10 as permitted sender) smtp.mailfrom=01020192c2b88300-8d371f8e-b154-4616-8690-3dc553c78f6b-000000@mail.tito.io;
+	dmarc=pass (policy=none) header.from=tito.io
+Received: from a3-10.smtp-out.eu-west-1.amazonses.com (a3-10.smtp-out.eu-west-1.amazonses.com [54.240.3.10])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by aspmx1.migadu.com (Postfix) with ESMTPS id 2D6B55F13D
+	for <user@domain.net>; Fri, 25 Oct 2024 10:08:45 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/simple;
+	s=od7rhe4qebuvge5vzupqrkympbljrg22; d=tito.io; t=1729843725;
+	h=Date:From:Reply-To:To:Message-ID:Subject:Mime-Version:Content-Type:Content-Transfer-Encoding;
+	bh=E9FDhfjeu71oNq7w+TGhovx8du6+SlO0MK57DQiEdjI=;
+	b=BlaqPWCMbe227oWzlHWya2APTCOXyIXRkR1wUj6P80bJuE8XYOT/nc+9F67XZWSs
+	Jtw+9us5PmcSXTxBU7HS/Gpaq6ehAPLVWnohAIrnP8lnyH2rIIPeouk002zdc9UtFk4
+	CKdjyW05IoXzfnsQ/rcnEPf/zTnu1t4K8egcLcxs=
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/simple;
+	s=uku4taia5b5tsbglxyj6zym32efj7xqv; d=amazonses.com; t=1729843725;
+	h=Date:From:Reply-To:To:Message-ID:Subject:Mime-Version:Content-Type:Content-Transfer-Encoding:Feedback-ID;
+	bh=E9FDhfjeu71oNq7w+TGhovx8du6+SlO0MK57DQiEdjI=;
+	b=jv0L41n1HFOYwdtxIYwkCQaV0WB5edYdI4m24EHOzJ3azuxDtL8Hea23W8RL6RJs
+	2YeBnWqPusBzIRV/2ja6B4QfFF5Jyq0d+2TgFb2hkpdGJ/j7cirVEoyDxX/92GM8fzW
+	gssLWJB095U54+84ss0XMIlTfByK/e0qQ7gF2CRA=
+Date: Fri, 25 Oct 2024 08:08:45 +0000
+From: Laracon EU 2025 <support@tito.io>
+Reply-To: contact@laracon.eu
+To: user@domain.net
+Message-ID: <01020192c2b88300-8d371f8e-b154-4616-8690-3dc553c78f6b-000000@eu-west-1.amazonses.com>
+Subject: =?UTF-8?Q?=F0=9F=9A=A8_Last_7_Days_for_Out-of-Pocket_Discount!?=
+Mime-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="--==_mimepart_671b520cb1543_125ecc18895c";
+ charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Tito-Signature: v1F5yXrjMbyhya1kebCV4ib8JezinzMvy1oAq1XV+AM3LNu65euHyoUy9mr3=0A4HAI5TaSjCO6rzL0XiAIsnSZJrFkTJA8sCFqeTm7EEo1Xa/VKagYSvIAGFeR=0AIludDkA94KBcEiFIDBJ+p18AWG4wh1mTJiLYb1R6pN4Qfc9kps8Vj1XvBBqX=0AYDmlyu0ocW6C6PjKzhRo18pEcbM+vPw/p9//gQWAoKG0sTS/7O3F4ZFeb2qc=0AuODDR/ihzIxttdCZRR9OcE8qrVo9aJWvdbC5bg===0A
+Feedback-ID: ::1.eu-west-1.wxK6+8+39YOV7L51iksIQwJNKa4LqeOpVLuwRJYHtdY=:AmazonSES
+X-SES-Outgoing: 2024.10.25-54.240.3.10
+X-Migadu-Flow: FLOW_IN
+X-Migadu-Country: US
+X-Migadu-Spam-Score: 1.97
+X-Spam-Score: 1.97
+X-Migadu-Queue-Id: 2D6B55F13D
+X-Migadu-Scanner: mx13.migadu.com
+X-TUID: T3M12KfTUD8n
+
+
+----==_mimepart_671b520cb1543_125ecc18895c
+Content-Type: text/plain;
+ charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Dear Laravel Enthusiast,
+
+The countdown has begun! Only 7 days remain to take advantage of exclusiv=
+e out-of-pocket discounts for Laracon EU. This is your final opportunity =
+to secure your ticket at special pricing before the offer expires.
+
+We can=E2=80=99t wait to welcome you to Laracon EU 2025 for an unforgetta=
+ble experience. Secure your spot today: https://laracon.eu/tickets.
+
+Warm regards,
+The Laracon EU Team
+
+----==_mimepart_671b520cb1543_125ecc18895c
+Content-Type: text/html;
+ charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica, Ari=
+al, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; padding: 0;=
+'>
+  <head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf=
+-8">
+    =
+
+  <style>body {
+background-color: #f3f6f8;
+}
+img {
+max-width: 100%;
+}
+body {
+-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; widt=
+h: 100% !important; height: 100%; padding-top: 50px;
+}
+</style>
+</head>
+
+  <body style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica, A=
+rial, sans-serif; font-size: 100%; line-height: 1.6; -webkit-font-smoothi=
+ng: antialiased; -webkit-text-size-adjust: none; width: 100% !important; =
+height: 100%; margin: 0; padding: 50px 0 0;' bgcolor=3D"#f3f6f8">
+    =
+
+  =
+
+  =
+
+
+  <!-- body -->
+  <table class=3D"body-wrap" style=3D'font-family: "Helvetica Neue", "Hel=
+vetica", Helvetica, Arial, sans-serif; font-size: 100%; line-height: 1.6;=
+ width: 100%; margin: 0; padding: 10px;'>
+    <tr style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica, A=
+rial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; padding: =
+0;'>
+      <td colspan=3D"3" style=3D'font-family: "Helvetica Neue", "Helvetic=
+a", Helvetica, Arial, sans-serif; font-size: 100%; line-height: 1.6; marg=
+in: 0; padding: 0;'></td>
+    </tr>
+    <tr style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica, A=
+rial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; padding: =
+0;'>
+      <td style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica,=
+ Arial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; padding=
+: 0;'></td>
+      <td class=3D"container" bgcolor=3D"#FFFFFF" style=3D'font-family: "=
+Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif; font-size: 10=
+0%; line-height: 1.6; display: block !important; max-width: 600px !import=
+ant; clear: both !important; margin: 0 auto; padding: 20px; border: 1px s=
+olid #c4c4c4;'>
+
+        <!-- content -->
+        <div class=3D"content content-body" style=3D'font-family: "Helvet=
+ica Neue", "Helvetica", Helvetica, Arial, sans-serif; font-size: 100%; li=
+ne-height: 1.6; max-width: 600px; display: block; margin: 0 auto; padding=
+: 0;'>
+        <table style=3D'font-family: "Helvetica Neue", "Helvetica", Helve=
+tica, Arial, sans-serif; font-size: 100%; line-height: 1.6; width: 100%; =
+margin: 0; padding: 0;'>
+          <tr style=3D'font-family: "Helvetica Neue", "Helvetica", Helvet=
+ica, Arial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; pad=
+ding: 0;'>
+            <td style=3D'font-family: "Helvetica Neue", "Helvetica", Helv=
+etica, Arial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; p=
+adding: 0;'>
+              <p style=3D'font-family: "Helvetica Neue", "Helvetica", Hel=
+vetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; font-weight=
+: normal; margin: 0 0 10px; padding: 0;'>Dear Laravel Enthusiast,</p>
+
+<p style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial,=
+ sans-serif; font-size: 14px; line-height: 1.6; font-weight: normal; marg=
+in: 0 0 10px; padding: 0;'>The countdown has begun! Only 7 days remain to=
+ take advantage of exclusive out-of-pocket discounts for Laracon EU. This=
+ is your final opportunity to secure your ticket at special pricing befor=
+e the offer expires.</p>
+
+<p style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial,=
+ sans-serif; font-size: 14px; line-height: 1.6; font-weight: normal; marg=
+in: 0 0 10px; padding: 0;'>We can=E2=80=99t wait to welcome you to Laraco=
+n EU 2025 for an unforgettable experience. Secure your spot today: <a hre=
+f=3D"https://laracon.eu/tickets" target=3D"_parent" style=3D'font-family:=
+ "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif; font-size: =
+100%; line-height: 1.6; color: #348eda; margin: 0; padding: 0;'>https://l=
+aracon.eu/tickets</a>.</p>
+
+<p style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial,=
+ sans-serif; font-size: 14px; line-height: 1.6; font-weight: normal; marg=
+in: 0; padding: 0;'>Warm regards,
+The Laracon EU Team</p>
+
+            </td>
+          </tr>
+        </table>
+        </div>
+        <!-- /content -->
+
+      </td>
+      <td style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica,=
+ Arial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; padding=
+: 0;'></td>
+    </tr>
+  </table>
+  <!-- /body -->
+
+
+
+  <!-- footer -->
+  <table class=3D"footer-wrap" style=3D'font-family: "Helvetica Neue", "H=
+elvetica", Helvetica, Arial, sans-serif; font-size: 100%; line-height: 1.=
+6; width: 100%; clear: both !important; margin: 0; padding: 0;'>
+
+    <tr style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica, A=
+rial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; padding: =
+0;'>
+      <td colspan=3D"3" class=3D"logo" style=3D'font-family: "Helvetica N=
+eue", "Helvetica", Helvetica, Arial, sans-serif; font-size: 100%; line-he=
+ight: 1.6; margin: 0; padding: 0;' align=3D"center"><img width=3D"40" hei=
+ght=3D"40" alt=3D"Tito" style=3D'opacity: .5; font-family: "Helvetica Neu=
+e", "Helvetica", Helvetica, Arial, sans-serif; font-size: 100%; line-heig=
+ht: 1.6; max-width: 100%; margin: 0 0 15px; padding: 0; border: 0;' src=3D=
+"https://dashboard.assets.tito.io/assets/tito-redux-mini-1614a29a21591677=
+c437fa63321bc54647da513db45aa19576a002f5b51874ae.png"></td>
+    </tr>
+    <tr style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica, A=
+rial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; padding: =
+0;'>
+      <td style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica,=
+ Arial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; padding=
+: 0;'></td>
+      <td class=3D"container" style=3D'font-family: "Helvetica Neue", "He=
+lvetica", Helvetica, Arial, sans-serif; font-size: 100%; line-height: 1.6=
+; display: block !important; max-width: 600px !important; clear: both !im=
+portant; margin: 0 auto; padding: 0;'>
+
+        <!-- content -->
+        <div class=3D"content" style=3D'font-family: "Helvetica Neue", "H=
+elvetica", Helvetica, Arial, sans-serif; font-size: 100%; line-height: 1.=
+6; max-width: 600px; display: block; margin: 0 auto; padding: 0;'>
+          <table style=3D'font-family: "Helvetica Neue", "Helvetica", Hel=
+vetica, Arial, sans-serif; font-size: 100%; line-height: 1.6; width: 100%=
+; margin: 0; padding: 0;'>
+            <tr style=3D'font-family: "Helvetica Neue", "Helvetica", Helv=
+etica, Arial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; p=
+adding: 0;'>
+              <td align=3D"center" style=3D'font-family: "Helvetica Neue"=
+, "Helvetica", Helvetica, Arial, sans-serif; font-size: 100%; line-height=
+: 1.6; margin: 0; padding: 0;'>
+                  <p style=3D'font-family: "Helvetica Neue", "Helvetica",=
+ Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.6; color: =
+#64737e; margin: 0; padding: 0;'>This email was sent to you at user@do=
+in.net because you registered interest for a <a href=3D"https://ti.to/lov=
+e-laravel" style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica=
+, Arial, sans-serif; font-size: 100%; line-height: 1.6; color: #323232; f=
+ont-weight: bold; text-decoration: none; margin: 0; padding: 0;'>Laravel =
+Conference &amp; Training</a> event.
+                    <br style=3D'font-family: "Helvetica Neue", "Helvetic=
+a", Helvetica, Arial, sans-serif; font-size: 100%; line-height: 1.6; marg=
+in: 0; padding: 0;'>
+                    <a href=3D"https://checkout.tito.io/message_deliverie=
+s/subscriptions/msg_del_pPPzUyrVD8R9lhFpnFQpRGg" style=3D'font-family: "H=
+elvetica Neue", "Helvetica", Helvetica, Arial, sans-serif; font-size: 100=
+%; line-height: 1.6; color: #323232; font-weight: bold; text-decoration: =
+none; margin: 0; padding: 0;'>Unsubscribe</a> | Delivered by <a href=3D"h=
+ttps://ti.to" style=3D'font-family: "Helvetica Neue", "Helvetica", Helvet=
+ica, Arial, sans-serif; font-size: 100%; line-height: 1.6; color: #323232=
+; font-weight: bold; text-decoration: none; margin: 0; padding: 0;'>Tito<=
+/a>.
+                  </p>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <!-- /content -->
+
+
+
+      </td>
+      <td style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica,=
+ Arial, sans-serif; font-size: 100%; line-height: 1.6; margin: 0; padding=
+: 0;'></td>
+    </tr>
+  </table>
+  <!-- /footer -->
+
+    <img src=3D"https://ti.to/message_deliveries/msg_del_pPPzUyrVD8R9lhFp=
+nFQpRGg" style=3D'font-family: "Helvetica Neue", "Helvetica", Helvetica, =
+Arial, sans-serif; font-size: 100%; line-height: 1.6; max-width: 100%; ma=
+rgin: 0; padding: 0;'>
+  =
+
+  </body>
+</html>
+
+----==_mimepart_671b520cb1543_125ecc18895c--
+
