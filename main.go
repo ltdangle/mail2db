@@ -21,7 +21,6 @@ type Email struct {
 	Path        string `gorm:"uniqueIndex;not null"`
 	From        string `gorm:"column:from_addr;not null"`
 	To          string `gorm:"column:to_addr;not null"`
-	DeliveredTo string
 	Subject     string
 	Body        string
 	Date        time.Time
