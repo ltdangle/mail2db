@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,18 +15,17 @@ import (
 )
 
 type Email struct {
-	Id          uint      `gorm:"primaryKey"`
-	Path        string    `gorm:"uniqueIndex;not null"`
-	From        string    `gorm:"column:from_addr;not null"`
-	To          string    `gorm:"column:to_addr;not null"`
+	Id          uint   `gorm:"primaryKey"`
+	Path        string `gorm:"uniqueIndex;not null"`
+	From        string `gorm:"column:from_addr;not null"`
+	To          string `gorm:"column:to_addr;not null"`
 	DeliveredTo string
 	Subject     string
 	Text        string
-	HTML        string
 	Date        time.Time
-	IsSeen      bool      `gorm:"default:false"`
-	IsReplied   bool      `gorm:"default:false"`
-	IsFlaggged  bool      `gorm:"default:false"`
+	IsSeen      bool `gorm:"default:false"`
+	IsReplied   bool `gorm:"default:false"`
+	IsFlaggged  bool `gorm:"default:false"`
 }
 
 // ParseMaildirFile parses the maildir file provided, and returns a pointer to the resulting Email struct and any error.
@@ -51,7 +49,7 @@ func ParseMaildirFile(path string) (*Email, error) {
 		// If date parsing fails, use current time as fallback
 		date = time.Now()
 	}
-	
+
 	from := env.GetHeader("From")
 	to := env.GetHeader("To")
 	subject := env.GetHeader("Subject")
@@ -96,175 +94,136 @@ func saveEmail(db *gorm.DB, email *Email) error {
 }
 
 func findEmailByPath(db *gorm.DB, path string) (*Email, error) {
-    var email Email
-    result := db.Where("path = ?", path).First(&email)
-    if result.Error != nil {
-        if result.Error == gorm.ErrRecordNotFound {
-            return nil, nil
-        }
-        return nil, result.Error
-    }
-    return &email, nil
-}
-
-func newEmails(repoPath string) ([]string, error) {
-	repoPath = strings.Trim(repoPath, " ")
-	cmd := exec.Command("git", "-C", repoPath, "ls-files", "--other")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	// Split output into lines and construct full paths
-	var paths []string
-	for _, file := range strings.Split(string(output), "\n") {
-		if file != "" {
-			paths = append(paths, file)
+	var email Email
+	result := db.Where("path = ?", path).First(&email)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
 		}
+		return nil, result.Error
 	}
-
-	return paths, nil
+	return &email, nil
 }
-
-func deletedEmails(repoPath string) ([]string, error) {
-	repoPath = strings.Trim(repoPath, " ")
-	cmd := exec.Command("git", "-C", repoPath, "ls-files", "--deleted")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	// Split output into lines and construct full paths
-	var paths []string
-	for _, file := range strings.Split(string(output), "\n") {
-		if file != "" {
-			paths = append(paths, file)
-		}
-	}
-
-	return paths, nil
-}
-
 
 func deleteEmail(db *gorm.DB, path string) error {
-    result := db.Where("path = ?", path).Delete(&Email{})
-    return result.Error
+	result := db.Where("path = ?", path).Delete(&Email{})
+	return result.Error
 }
 
 func getAllEmailPaths(db *gorm.DB) ([]string, error) {
-    var paths []string
-    result := db.Model(&Email{}).Pluck("path", &paths)
-    return paths, result.Error
+	var paths []string
+	result := db.Model(&Email{}).Pluck("path", &paths)
+	return paths, result.Error
 }
 
 func main() {
-    if len(os.Args) != 2 {
-        fmt.Println("Usage: go run . <imap_mail_directory>")
-        os.Exit(1)
-    }
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: go run . <imap_mail_directory>")
+		os.Exit(1)
+	}
 
-    mailDir := os.Args[1]
+	mailDir := os.Args[1]
 
-    // Check if directory exists
-    info, err := os.Stat(mailDir)
-    if err != nil {
-        log.Fatalf("Error accessing directory: %v", err)
-    }
-    if !info.IsDir() {
-        log.Fatalf("%s is not a directory", mailDir)
-    }
-    db := initDB()
+	// Check if directory exists
+	info, err := os.Stat(mailDir)
+	if err != nil {
+		log.Fatalf("Error accessing directory: %v", err)
+	}
+	if !info.IsDir() {
+		log.Fatalf("%s is not a directory", mailDir)
+	}
+	db := initDB()
 
-    // Add counters
-    var totalFiles, parsedFiles, skippedFiles int
+	// Add counters
+	var totalFiles, parsedFiles, skippedFiles int
 
-    err = filepath.Walk(mailDir, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
+	err = filepath.Walk(mailDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
-        if !info.IsDir() {
-            totalFiles++
-            
-            existing, err := findEmailByPath(db, path)
-            if err != nil {
-                log.Printf("Error checking for existing email at %s: %v", path, err)
-                fmt.Printf("Skipped file: %s\n", path)
-                skippedFiles++
-                return nil
-            }
-            if existing != nil {
-                // Skip already processed emails
-                fmt.Printf("Skipped file (already exists): %s\n", path)
-                skippedFiles++
-                return nil
-            }
+		if !info.IsDir() {
+			totalFiles++
 
-            fmt.Printf("Parsing file: %s\n", path)
-            email, err := ParseMaildirFile(path)
-            if err != nil {
-                fmt.Printf("Skipped file (parse error): %s\n", path)
-                skippedFiles++
-                return nil
-            }
+			existing, err := findEmailByPath(db, path)
+			if err != nil {
+				log.Printf("Error checking for existing email at %s: %v", path, err)
+				fmt.Printf("Skipped file: %s\n", path)
+				skippedFiles++
+				return nil
+			}
+			if existing != nil {
+				// Skip already processed emails
+				fmt.Printf("Skipped file (already exists): %s\n", path)
+				skippedFiles++
+				return nil
+			}
 
-            err = saveEmail(db, email)
-            if err != nil {
-                log.Printf("Error saving email from %s: %v", path, err)
-                fmt.Printf("Skipped file (save error): %s\n", path)
-                skippedFiles++
-                return nil
-            }
+			fmt.Printf("Parsing file: %s\n", path)
+			email, err := ParseMaildirFile(path)
+			if err != nil {
+				fmt.Printf("Skipped file (parse error): %s\n", path)
+				skippedFiles++
+				return nil
+			}
 
-            parsedFiles++
-            fmt.Printf("Processed email from: %s\n", email.From)
-        }
+			err = saveEmail(db, email)
+			if err != nil {
+				log.Printf("Error saving email from %s: %v", path, err)
+				fmt.Printf("Skipped file (save error): %s\n", path)
+				skippedFiles++
+				return nil
+			}
 
-        return nil
-    })
+			parsedFiles++
+			fmt.Printf("Processed email from: %s\n", email.From)
+		}
 
-    if err != nil {
-        log.Fatal(err)
-    }
+		return nil
+	})
 
-    // Get all paths from database
-    dbPaths, err := getAllEmailPaths(db)
-    if err != nil {
-        log.Fatal("Error getting database paths:", err)
-    }
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    // Create a map of filesystem paths for efficient lookup
-    fsPathsMap := make(map[string]bool)
-    err = filepath.Walk(mailDir, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
-        if !info.IsDir() {
-            fsPathsMap[path] = true
-        }
-        return nil
-    })
-    if err != nil {
-        log.Fatal("Error walking filesystem:", err)
-    }
+	// Get all paths from database
+	dbPaths, err := getAllEmailPaths(db)
+	if err != nil {
+		log.Fatal("Error getting database paths:", err)
+	}
 
-    // Delete database records for files that no longer exist
-    var deletedCount int
-    for _, dbPath := range dbPaths {
-        if !fsPathsMap[dbPath] {
-            if err := deleteEmail(db, dbPath); err != nil {
-                log.Printf("Error deleting email record for %s: %v", dbPath, err)
-                continue
-            }
-            deletedCount++
-            fmt.Printf("Deleted database record for missing file: %s\n", dbPath)
-        }
-    }
+	// Create a map of filesystem paths for efficient lookup
+	fsPathsMap := make(map[string]bool)
+	err = filepath.Walk(mailDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			fsPathsMap[path] = true
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal("Error walking filesystem:", err)
+	}
 
-    // Print statistics
-    fmt.Printf("\nProcessing complete:\n")
-    fmt.Printf("Total files found: %d\n", totalFiles)
-    fmt.Printf("Successfully parsed and saved: %d\n", parsedFiles)
-    fmt.Printf("Skipped files: %d\n", skippedFiles)
-    fmt.Printf("Deleted records: %d\n", deletedCount)
+	// Delete database records for files that no longer exist
+	var deletedCount int
+	for _, dbPath := range dbPaths {
+		if !fsPathsMap[dbPath] {
+			if err := deleteEmail(db, dbPath); err != nil {
+				log.Printf("Error deleting email record for %s: %v", dbPath, err)
+				continue
+			}
+			deletedCount++
+			fmt.Printf("Deleted database record for missing file: %s\n", dbPath)
+		}
+	}
+
+	// Print statistics
+	fmt.Printf("\nProcessing complete:\n")
+	fmt.Printf("Total files found: %d\n", totalFiles)
+	fmt.Printf("Successfully parsed and saved: %d\n", parsedFiles)
+	fmt.Printf("Skipped files: %d\n", skippedFiles)
+	fmt.Printf("Deleted records: %d\n", deletedCount)
 }
