@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -45,12 +46,24 @@ func ParseMaildirFile(path string) (*Email, error) {
 	}
 
 	// Extract the email headers and body.
-	// Normalize spaces in date string before parsing
-	dateStr := strings.Join(strings.Fields(env.GetHeader("Date")), " ")
-	date, err := dateparse.ParseAny(dateStr)
-	if err != nil {
-		// If date parsing fails, use Unix epoch start as fallback
-		date = time.Unix(0, 0)
+	// Try to get date from email header first
+	date := time.Unix(0, 0) // default fallback
+	if dateStr := env.GetHeader("Date"); dateStr != "" {
+		// Normalize spaces in date string before parsing
+		dateStr = strings.Join(strings.Fields(dateStr), " ")
+		if parsedDate, err := dateparse.ParseAny(dateStr); err == nil {
+			date = parsedDate
+		}
+	}
+
+	// If header date parsing failed, try to get timestamp from filename
+	if date.Equal(time.Unix(0, 0)) {
+		basename := filepath.Base(path)
+		if timestamp := strings.Split(basename, ".")[0]; timestamp != "" {
+			if unixTime, err := strconv.ParseInt(timestamp, 10, 64); err == nil {
+				date = time.Unix(unixTime, 0)
+			}
+		}
 	}
 
 	from := env.GetHeader("From")
