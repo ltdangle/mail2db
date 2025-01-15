@@ -45,7 +45,9 @@ func ParseMaildirFile(path string) (*Email, error) {
 	}
 
 	// Extract the email headers and body.
-	date, err := dateparse.ParseAny(env.GetHeader("Date"))
+	// Normalize spaces in date string before parsing
+	dateStr := strings.Join(strings.Fields(env.GetHeader("Date")), " ")
+	date, err := dateparse.ParseAny(dateStr)
 	if err != nil {
 		// If date parsing fails, use current time as fallback
 		date = time.Now()
